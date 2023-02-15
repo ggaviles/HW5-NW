@@ -139,39 +139,39 @@ class NeedlemanWunsch:
         m = len(seqB)
 
         # Generate matrix of zeros to store scores
-        self._align_matrix = np.zeros((m + 1, n + 1))
-        self._gapA_matrix = np.zeros((m + 1, n + 1))
-        self._gapB_matrix = np.zeros((m + 1, n + 1))
+        self._align_matrix = np.zeros((m+1, n+1))
+        self._gapA_matrix = np.zeros((m+1, n+1))
+        self._gapB_matrix = np.zeros((m+1, n+1))
 
         # TODO: Implement global alignment here
 
         # Initialize empty matrices
-        score_mat = np.zeros((m + 1, n + 1))
+        score_mat = np.zeros((m+1, n+1))
 
         # Initialize matrix values
 
-        for i in range(0, m + 1):
+        for i in range(0, m+1):
             score_mat[i][0] = gap_open_penalty * i
             self._align_matrix[i][0] = gap_open_penalty * i
             self._gapA_matrix[i][0] = np.NINF
             self._gapB_matrix[i][0] = -(gap_open_penalty + gap_ext_penalty * i)
 
-        for j in range(0, n + 1):
+        for j in range(0, n+1):
             score_mat[0][j] = gap_open_penalty * j
-            self.align_matrix[0][j] = gap_open_penalty * j
+            self._align_matrix[0][j] = gap_open_penalty * j
             self._gapA_matrix[0][j] = -(gap_open_penalty + gap_ext_penalty * j)
             self._gapB_matrix[0][j] = np.NINF
 
-        for i in range(1, m + 1):
-            for j in range(1, n + 1):
-                score_mat[i][j] = (self._align_matrix[i - 1][j - 1] + sub_dict[(seqA[j - 1], seqB[i - 1])]) + max(
-                    score_mat[i - 1][j - 1], self._gapA_matrix[i - 1][j - 1], self._gapB_matrix[i - 1][j - 1])
-                self._gapA_matrix[i][j] = max((score_mat[i][j - 1] + (gap_open_penalty + gap_ext_penalty)),
-                                     (self._gapA_matrix[i][j - 1] + gap_open_penalty),
-                                     ((self._gapB_matrix[i][j - 1]) + (gap_open_penalty + gap_ext_penalty)))
-                self._gapB_matrix[i][j] = max((score_mat[i - 1][j] + (gap_open_penalty + gap_ext_penalty)),
-                                     (self._gapA_matrix[i - 1][j] + (gap_open_penalty + gap_ext_penalty)),
-                                     (self._gapB_matrix[i - 1][j] + gap_open_penalty))
+        for i in range(1, m+1):
+            for j in range(1, n+1):
+                score_mat[i][j] = (self._align_matrix[i-1][j-1] + sub_dict[(seqA[j-1], seqB[i-1])]) + max(
+                    score_mat[i-1][j-1], self._gapA_matrix[i-1][j-1], self._gapB_matrix[i-1][j-1])
+                self._gapA_matrix[i][j] = max((score_mat[i][j-1] + (gap_open_penalty + gap_ext_penalty)),
+                                     (self._gapA_matrix[i][j-1] + gap_open_penalty),
+                                     ((self._gapB_matrix[i][j-1]) + (gap_open_penalty + gap_ext_penalty)))
+                self._gapB_matrix[i][j] = max((score_mat[i-1][j] + (gap_open_penalty + gap_ext_penalty)),
+                                     (self._gapA_matrix[i-1][j] + (gap_open_penalty + gap_ext_penalty)),
+                                     (self._gapB_matrix[i-1][j] + gap_open_penalty))
 
         return self._backtrace()
 
