@@ -128,7 +128,8 @@ class NeedlemanWunsch:
         
         # TODO: Initialize matrix private attributes for use in alignment
 
-        gap_penalty = self.gap_open
+        gap_open_penalty = self.gap_open
+        gap_ext_penalty = self.gap_extend
 
         sub_dict = self.sub_dict
         # create matrices for alignment scores, gaps, and backtracing
@@ -138,24 +139,39 @@ class NeedlemanWunsch:
         m = len(seqB)
 
         # Generate matrix of zeros to store scores
-        self._align_matrix = np.zeros(n + 1, m + 1)
-
+        self._align_matrix = np.zeros((m + 1, n + 1))
+        self._gapA_matrix = np.zeros((m + 1, n + 1))
+        self._gapB_matrix = np.zeros((m + 1, n + 1))
 
         # TODO: Implement global alignment here
 
-        for i in range(0, n + 1):
-            self._align_matrix[i][0] = gap_penalty * i
+        # Initialize empty matrices
+        score_mat = np.zeros((m + 1, n + 1))
 
-        for j in range(0, m + 1):
-            self._align_matrix[0][j] = gap_penalty * j
+        # Initialize matrix values
 
-        for i in range(1, n + 1):
-            for j in range(1, m + 1):
-                match = self._align_matrix[i - 1][j - 1] + sub_dict[(seqA[i - 1], seqB[j - 1])]
-                delete = self._align_matrix[i - 1][j] + gap_penalty
-                insert = self._align_matrix[i][j - 1] + gap_penalty
+        for i in range(0, m + 1):
+            score_mat[i][0] = gap_open_penalty * i
+            self._align_matrix[i][0] = gap_open_penalty * i
+            self._gapA_matrix[i][0] = np.NINF
+            self._gapB_matrix[i][0] = -(gap_open_penalty + gap_ext_penalty * i)
 
-                self._align_matrix[i][j] = max(match, delete, insert)
+        for j in range(0, n + 1):
+            score_mat[0][j] = gap_open_penalty * j
+            self.align_matrix[0][j] = gap_open_penalty * j
+            self._gapA_matrix[0][j] = -(gap_open_penalty + gap_ext_penalty * j)
+            self._gapB_matrix[0][j] = np.NINF
+
+        for i in range(1, m + 1):
+            for j in range(1, n + 1):
+                score_mat[i][j] = (self._align_matrix[i - 1][j - 1] + sub_dict[(seqA[j - 1], seqB[i - 1])]) + max(
+                    score_mat[i - 1][j - 1], self._gapA_matrix[i - 1][j - 1], self._gapB_matrix[i - 1][j - 1])
+                self._gapA_matrix[i][j] = max((score_mat[i][j - 1] + (gap_open_penalty + gap_ext_penalty)),
+                                     (self._gapA_matrix[i][j - 1] + gap_open_penalty),
+                                     ((self._gapB_matrix[i][j - 1]) + (gap_open_penalty + gap_ext_penalty)))
+                self._gapB_matrix[i][j] = max((score_mat[i - 1][j] + (gap_open_penalty + gap_ext_penalty)),
+                                     (self._gapA_matrix[i - 1][j] + (gap_open_penalty + gap_ext_penalty)),
+                                     (self._gapB_matrix[i - 1][j] + gap_open_penalty))
 
         return self._backtrace()
 
@@ -181,8 +197,8 @@ class NeedlemanWunsch:
 
         gap_penalty = self.gap_open
 
-        i = len(seqA)
-        j = len(seqB)
+        i = len(seqB)
+        j = len(seqA)
 
         while i > 0 and j > 0:  # end touching the top or the left edge
             score_current = self._align_matrix[i][j]
