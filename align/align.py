@@ -126,7 +126,7 @@ class NeedlemanWunsch:
         # Initializing sequences for use in backtrace method
         self._seqA = seqA
         self._seqB = seqB
-        
+
         # TODO: Initialize matrix private attributes for use in alignment
 
         gap_open_penalty = self.gap_open
@@ -144,8 +144,6 @@ class NeedlemanWunsch:
         self._gapA_matrix = np.zeros((m + 1, n + 1))
         self._gapB_matrix = np.zeros((m + 1, n + 1))
 
-        # TODO: Implement global alignment here
-
         for i in range(1, m + 1):
             self._align_matrix[i][0] = -np.inf
             self._gapA_matrix[i][0] = gap_open_penalty + (gap_ext_penalty * i)
@@ -155,6 +153,8 @@ class NeedlemanWunsch:
             self._align_matrix[0][j] = -np.inf
             self._gapA_matrix[0][j] = -np.inf
             self._gapB_matrix[0][j] = gap_open_penalty + (gap_ext_penalty * j)
+
+        # TODO: Implement global alignment here
 
         for i in range(1, m + 1):
             for j in range(1, n + 1):
@@ -187,20 +187,18 @@ class NeedlemanWunsch:
         n = len(self._seqA)
         m = len(self._seqB)
 
-        # Building traceback matrix
-
-        # Fill in back matrix for traceback
+        # Build traceback matrix
         traceback_mat = np.ones((m + 1, n + 1)) * -np.inf
 
         for i in range(1, m + 1):
             for j in range(1, n + 1):
-                # A match is represented in the back matrix as a 0
+                # Represent a match by 0
                 if self._score_matrix[i][j] == self._align_matrix[i][j]:
                     traceback_mat[i][j] = 0
-                # A gap in seqA is represented in the back matrix as a -1
+                # Represent a gap in seqA as -1
                 elif self._score_matrix[i][j] == self._gapA_matrix[i][j]:
                     traceback_mat[i][j] = -1
-                # A gap in seqB is represented in the back matrix as a 1
+                # Represent a gap in seqB as 1
                 else:
                     traceback_mat[i][j] = 1
 
@@ -231,13 +229,13 @@ class NeedlemanWunsch:
                 self.seqB_align += '-'
                 i -= 1
 
+        # Invert sequences
         self.seqA_align = self.seqA_align[::-1]
         self.seqB_align = self.seqB_align[::-1]
 
         # Calculate the alignment score by comparing the two sequences
         gap_counter = 0
-
-        for i in range(len(self.seqA_align)):  # Iterate through sequence A
+        for i in range(min(len(self.seqA_align), len(self.seqB_align))):  # Iterate through sequence A
             if self.seqA_align[i] == self.seqB_align[i]:
                 # If the two sequences match at position i, add to alignment score the score found in the subdict
                 self.alignment_score += self.sub_dict[(self.seqA_align[i], self.seqB_align[i])]
