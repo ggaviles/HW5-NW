@@ -1,5 +1,7 @@
 # Importing Dependencies
 import pytest
+from Bio import Align
+from Bio.Align import substitution_matrices
 from align import NeedlemanWunsch, read_fasta
 import numpy as np
 
@@ -17,6 +19,22 @@ def test_nw_alignment():
     needle_wunsch = NeedlemanWunsch("./substitution_matrices/BLOSUM62.mat", -10.0, -1.0)
     alignment_score, seq1_align, seq2_align = needle_wunsch.align(seq1, seq2)
 
+    aligner = Align.PairwiseAligner()
+    aligner.substitution_matrix = substitution_matrices.load("BLOSUM62")
+
+    # Had to change this to -11 instead of -10 because Align.PairwiseAligner() does not add gap_open and gap_extend
+    # for one initial gap, while my model does. To compensate for that difference, I changed the open_gap_score to be
+    # my open gap score + extend gap score (-10 + -1), which is -11. Since there is a singular gap in the alignment
+    # between seq1 and seq2, I think this is a reasonable change.
+    aligner.open_gap_score = -11
+
+    # For some reason, I get a score of
+    for alignment in aligner.align(seq1, seq2):
+        assert alignment_score == alignment.score
+
+    # Alignment is correct
+    assert seq1_align == "MYQR"
+    assert seq2_align == "M-QR"
 
 def test_nw_backtrace():
     """

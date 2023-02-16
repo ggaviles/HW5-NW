@@ -27,6 +27,9 @@ jobs:
       - name: Install numpy
         run: |
           pip install numpy
+      - name: Install biopython
+        run: |
+          pip install biopython
       - name: Test with pytest
         run: |
           python -m pytest -vv test/*py
