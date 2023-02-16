@@ -238,17 +238,21 @@ class NeedlemanWunsch:
         gap_counter = 0
 
         for i in range(len(self.seqA_align)):  # Iterate through sequence A
-            if self.seqA_align[i] == self.seqB_align[i]:  #
+            if self.seqA_align[i] == self.seqB_align[i]:
+                # If the two sequences match at position i, add to alignment score the score found in the subdict
                 self.alignment_score += self.sub_dict[(self.seqA_align[i], self.seqB_align[i])]
+                # Reset the gap_counter since any gap has not been continued
                 gap_counter = 0
             else:
+                # Consider if either sequence at position i has a '-'
                 if self.seqA_align[i] == '-' or self.seqB_align[i] == '-':
-                    if gap_counter == 0:
+                    if gap_counter == 0:  # If it's a first gap, add both the open penalty and extend penalty to score
                         self.alignment_score += self.gap_open + self.gap_extend
-                        gap_counter += 1
-                    else:
+                        gap_counter += 1  # Add one gap to the gap counter
+                    else:  # If this gap isn't the first in a sequence, only add the extend penalty
                         self.alignment_score += self.gap_extend
                 else:
+                    # If there is a mismatch, add the mismatch score from the subdict to the alignment score
                     self.alignment_score += self.sub_dict[(self.seqA_align[i], self.seqB_align[i])]
                     gap_counter = 0  # Reset gap counter
 
