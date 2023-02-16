@@ -1,4 +1,4 @@
-! [BuildStatus] (https://github.com/ggaviles/Project3/workflows/Project3/badge.svg?event=push)
+! [BuildStatus] (https://github.com/ggaviles/HW5-NW/blob/main/.github/workflows/ci.yml/badge.svg?event=push)
 
 # Project 4
 Needleman Wunsch Algorithm
