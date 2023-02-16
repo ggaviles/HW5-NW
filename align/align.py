@@ -132,14 +132,12 @@ class NeedlemanWunsch:
         gap_open_penalty = self.gap_open
         gap_ext_penalty = self.gap_extend
 
-        # create matrices for alignment scores, gaps, and backtracing
-
         # Determine length of each sequence and store in n or m
         n = len(self._seqA)
         m = len(self._seqB)
 
-        # Initialize empty matrices
-        self._align_matrix = np.zeros((m + 1, n + 1))  # rows vs col
+        # Initialize matrices
+        self._align_matrix = np.zeros((m + 1, n + 1))
         self._score_matrix = np.zeros((m + 1, n + 1))
         self._gapA_matrix = np.zeros((m + 1, n + 1))
         self._gapB_matrix = np.zeros((m + 1, n + 1))
@@ -158,6 +156,7 @@ class NeedlemanWunsch:
 
         for i in range(1, m + 1):
             for j in range(1, n + 1):
+                # Construct the alignment, gapA, and gapB, matrices
                 self._align_matrix[i][j] = max(self._align_matrix[i - 1][j - 1] + self.sub_dict[(seqA[j - 1], seqB[i - 1])],
                                       self._gapA_matrix[i - 1][j - 1] + self.sub_dict[(seqA[j - 1], seqB[i - 1])],
                                       self._gapB_matrix[i - 1][j - 1] + self.sub_dict[(seqA[j - 1], seqB[i - 1])])
@@ -165,6 +164,7 @@ class NeedlemanWunsch:
                                      (self._gapA_matrix[i - 1][j] + gap_ext_penalty))
                 self._gapB_matrix[i][j] = max((self._align_matrix[i][j - 1] + gap_open_penalty + gap_ext_penalty),
                                      (self._gapB_matrix[i][j - 1] + gap_ext_penalty))
+                # Construct the best score matrix with the maximum values across all three matrices
                 self._score_matrix[i][j] = max(self._align_matrix[i][j], self._gapA_matrix[i][j], self._gapB_matrix[i][j])
 
         return self._backtrace()
@@ -190,34 +190,41 @@ class NeedlemanWunsch:
         # Build traceback matrix
         traceback_mat = np.ones((m + 1, n + 1)) * -np.inf
 
+        # Iterate through traceback matrix
         for i in range(1, m + 1):
             for j in range(1, n + 1):
-                # Represent a match by 0
+                # When the best score at position (i,j) = alignment score at position (i, j), there is a match
+                # Represent a match by a score of 0
                 if self._score_matrix[i][j] == self._align_matrix[i][j]:
                     traceback_mat[i][j] = 0
-                # Represent a gap in seqA as -1
+                # When the best score at position (i,j) = gapA score at position (i, j), there is a gap in seq A
+                # Represent a gap in sequence A as -1
                 elif self._score_matrix[i][j] == self._gapA_matrix[i][j]:
                     traceback_mat[i][j] = -1
-                # Represent a gap in seqB as 1
+                # When the best score at position (i,j) = gapB score at position (i, j), there is a gap in seq B
+                # Represent a gap in sequence B as 1
                 else:
                     traceback_mat[i][j] = 1
 
+        # Start traceback from bottom right of matrix
         while i > 0 and j > 0:
-            back_step = traceback_mat[i][j]
-            if back_step == 0:
+            traceback = traceback_mat[i][j]
+            # If there is a match, add next letter in seqA/B to respective seqA_align/seqB_align strings
+            if traceback == 0:
                 self.seqA_align += self._seqA[j - 1]
                 self.seqB_align += self._seqB[i - 1]
-                i -= 1
+                i -= 1  # Decrease i, j together to travel diagonally
                 j -= 1
-            elif back_step == -1:
-                self.seqA_align += "-"
-                self.seqB_align = self._seqB[i - 1]
-                i -= 1
-            elif back_step == 1:
-                self.seqA_align += self._seqA[j - 1]
-                self.seqB_align += "-"
-                j -= 1
+            elif traceback == -1:  # If there is a gap in seq A
+                self.seqA_align += "-"  # Place '-' to signal gap
+                self.seqB_align = self._seqB[i - 1]  # add next letter in seqB to seqB_align string
+                i -= 1  # Decrease i to travel up column
+            elif traceback == 1:  # If there is a gap in seq B
+                self.seqA_align += self._seqA[j - 1]  # add next letter in seqA to seqA_align string
+                self.seqB_align += "-"  # Place '-' to signal gap
+                j -= 1  # Decrease j to travel left in row
 
+        # Finish traceback when reach leftmost column or uppermost row
         if i > 0 and j == 0:
             while i > 0:
                 self.seqA_align += '-'
@@ -229,7 +236,7 @@ class NeedlemanWunsch:
                 self.seqB_align += '-'
                 j -= 1
 
-        # Invert sequences
+        # Invert sequences since the traceback computes the sequence backwards
         self.seqA_align = self.seqA_align[::-1]
         self.seqB_align = self.seqB_align[::-1]
 
