@@ -234,6 +234,24 @@ class NeedlemanWunsch:
         self.seqA_align = self.seqA_align[::-1]
         self.seqB_align = self.seqB_align[::-1]
 
+        # Calculate the alignment score by comparing the two sequences
+        gap_counter = 0
+
+        for i in range(len(self.seqA_align)):  # Iterate through sequence A
+            if self.seqA_align[i] == self.seqB_align[i]:  #
+                self.alignment_score += self.sub_dict[(self.seqA_align[i], self.seqB_align[i])]
+                gap_counter = 0
+            else:
+                if self.seqA_align[i] == '-' or self.seqB_align[i] == '-':
+                    if gap_counter == 0:
+                        self.alignment_score += self.gap_open + self.gap_extend
+                        gap_counter += 1
+                    else:
+                        self.alignment_score += self.gap_extend
+                else:
+                    self.alignment_score += self.sub_dict[(self.seqA_align[i], self.seqB_align[i])]
+                    gap_counter = 0  # Reset gap counter
+
         return (self.alignment_score, self.seqA_align, self.seqB_align)
 
 
