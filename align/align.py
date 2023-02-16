@@ -227,7 +227,7 @@ class NeedlemanWunsch:
             while j > 0:
                 self.seqA_align += self._seqA[j - 1]
                 self.seqB_align += '-'
-                i -= 1
+                j -= 1
 
         # Invert sequences
         self.seqA_align = self.seqA_align[::-1]

@@ -30,12 +30,13 @@ def main():
     # Align Tursiops truncatus to Homo sapiens
     align_turs_score, hs_turs_align, turs_hs_align = needle_wunsch.align(hs_seq, tt_seq)
 
+
     # TODO print all of the alignment scores between each species BRD2 and human BRD2
     # using gap opening penalty of -10 and a gap extension penalty of -1 and BLOSUM62 matrix
-    print('Gallus gallus alignment score: ', align_gallus_score)
-    print('Mus musculus alignment score: ', align_mus_score)
-    print('Balaeniceps rex alignment score: ', align_bal_score)
-    print('Tursiops truncatus alignment score: ', align_turs_score)
+    print('Gallus gallus alignment score:', align_gallus_score)
+    print('Mus musculus alignment score:', align_mus_score)
+    print('Balaeniceps rex alignment score:', align_bal_score)
+    print('Tursiops truncatus alignment score:', align_turs_score)
 
 if __name__ == "__main__":
     main()
