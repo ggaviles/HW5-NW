@@ -31,6 +31,7 @@ class NeedlemanWunsch:
         self._align_matrix = None
         self._gapA_matrix = None
         self._gapB_matrix = None
+        self._score_matrix = None
 
         # Init matrices for backtrace procedure
         self._back = None
@@ -131,49 +132,42 @@ class NeedlemanWunsch:
         gap_open_penalty = self.gap_open
         gap_ext_penalty = self.gap_extend
 
-        sub_dict = self.sub_dict
         # create matrices for alignment scores, gaps, and backtracing
 
         # Determine length of each sequence and store in n or m
-        n = len(seqA)
-        m = len(seqB)
+        n = len(self._seqA)
+        m = len(self._seqB)
 
-        # Generate matrix of zeros to store scores
-        self._align_matrix = np.zeros((m+1, n+1))
-        self._gapA_matrix = np.zeros((m+1, n+1))
-        self._gapB_matrix = np.zeros((m+1, n+1))
+        # Initialize empty matrices
+        self._align_matrix = np.zeros((m + 1, n + 1))  # rows vs col
+        self._score_matrix = np.zeros((m + 1, n + 1))
+        self._gapA_matrix = np.zeros((m + 1, n + 1))
+        self._gapB_matrix = np.zeros((m + 1, n + 1))
 
         # TODO: Implement global alignment here
 
-        # Initialize empty matrices
-        score_mat = np.zeros((m+1, n+1))
+        for i in range(1, m + 1):
+            self._align_matrix[i][0] = -np.inf
+            self._gapA_matrix[i][0] = gap_open_penalty + (gap_ext_penalty * i)
+            self._gapB_matrix[i][0] = -np.inf
 
-        # Initialize matrix values
+        for j in range(1, n + 1):
+            self._align_matrix[0][j] = -np.inf
+            self._gapA_matrix[0][j] = -np.inf
+            self._gapB_matrix[0][j] = gap_open_penalty + (gap_ext_penalty * j)
 
-        for i in range(0, m+1):
-            score_mat[i][0] = gap_open_penalty * i
-            self._align_matrix[i][0] = gap_open_penalty * i
-            self._gapA_matrix[i][0] = np.NINF
-            self._gapB_matrix[i][0] = -(gap_open_penalty + gap_ext_penalty * i)
+        for i in range(1, m + 1):
+            for j in range(1, n + 1):
+                self._align_matrix[i][j] = max(self._align_matrix[i - 1][j - 1] + self.sub_dict[(seqA[j - 1], seqB[i - 1])],
+                                      self._gapA_matrix[i - 1][j - 1] + self.sub_dict[(seqA[j - 1], seqB[i - 1])],
+                                      self._gapB_matrix[i - 1][j - 1] + self.sub_dict[(seqA[j - 1], seqB[i - 1])])
+                self._gapA_matrix[i][j] = max((self._align_matrix[i - 1][j] + gap_open_penalty + gap_ext_penalty),
+                                     (self._gapA_matrix[i - 1][j] + gap_ext_penalty))
+                self._gapB_matrix[i][j] = max((self._align_matrix[i][j - 1] + gap_open_penalty + gap_ext_penalty),
+                                     (self._gapB_matrix[i][j - 1] + gap_ext_penalty))
+                self._score_matrix[i][j] = max(self._align_matrix[i][j], self._gapA_matrix[i][j], self._gapB_matrix[i][j])
 
-        for j in range(0, n+1):
-            score_mat[0][j] = gap_open_penalty * j
-            self._align_matrix[0][j] = gap_open_penalty * j
-            self._gapA_matrix[0][j] = -(gap_open_penalty + gap_ext_penalty * j)
-            self._gapB_matrix[0][j] = np.NINF
 
-        for i in range(1, m+1):
-            for j in range(1, n+1):
-                score_mat[i][j] = (self._align_matrix[i-1][j-1] + sub_dict[(seqA[j-1], seqB[i-1])]) + max(
-                    score_mat[i-1][j-1], self._gapA_matrix[i-1][j-1], self._gapB_matrix[i-1][j-1])
-                self._gapA_matrix[i][j] = max((score_mat[i][j-1] + (gap_open_penalty + gap_ext_penalty)),
-                                     (self._gapA_matrix[i][j-1] + gap_open_penalty),
-                                     ((self._gapB_matrix[i][j-1]) + (gap_open_penalty + gap_ext_penalty)))
-                self._gapB_matrix[i][j] = max((score_mat[i-1][j] + (gap_open_penalty + gap_ext_penalty)),
-                                     (self._gapA_matrix[i-1][j] + (gap_open_penalty + gap_ext_penalty)),
-                                     (self._gapB_matrix[i-1][j] + gap_open_penalty))
-
-        return self._backtrace()
 
     def _backtrace(self) -> Tuple[float, str, str]:
         """
@@ -189,59 +183,56 @@ class NeedlemanWunsch:
          	(alignment score, seqA alignment, seqB alignment) : Tuple[float, str, str]
          		the score and corresponding strings for the alignment of seqA and seqB
         """
-        seqA = self._seqA
-        seqB = self._seqB
-        sub_dict = self.sub_dict
-        alignA = self.seqA_align
-        alignB = self.seqB_align
 
-        gap_penalty = self.gap_open
+        n = len(self._seqA)
+        m = len(self._seqB)
 
-        i = len(seqB)
-        j = len(seqA)
+        # Building traceback matrix
 
-        while i > 0 and j > 0:  # end touching the top or the left edge
-            score_current = self._align_matrix[i][j]
-            score_diagonal = self._align_matrix[i - 1][j - 1]
-            score_up = self._align_matrix[i][j - 1]
-            score_left = self._align_matrix[i - 1][j]
+        # Fill in back matrix for traceback
+        traceback_mat = np.ones((m + 1, n + 1)) * -np.inf
 
-            # Check to figure out which cell the current score was calculated from,
-            # then update i and j to correspond to that cell.
-            if score_current == score_diagonal + sub_dict[(seqA[j - 1], seqB[i - 1])]:
-                alignA += seqA[j - 1]
-                alignB += seqB[i - 1]
+        for i in range(1, m + 1):
+            for j in range(1, n + 1):
+                # A match is represented in the back matrix as a 0
+                if self._score_matrix[i][j] == self._align_matrix[i][j]:
+                    traceback_mat[i][j] = 0
+                # A gap in seqA is represented in the back matrix as a -1
+                elif self._score_matrix[i][j] == self._gapA_matrix[i][j]:
+                    traceback_mat[i][j] = -1
+                # A gap in seqB is represented in the back matrix as a 1
+                else:
+                    traceback_mat[i][j] = 1
+
+        while i > 0 and j > 0:
+            back_step = traceback_mat[i][j]
+            if back_step == 0:
+                self.seqA_align += self._seqA[j - 1]
+                self.seqB_align += self._seqB[i - 1]
                 i -= 1
                 j -= 1
-            elif score_current == score_up + gap_penalty:
-                alignA += seqA[j - 1]
-                alignB += '-'
+            elif back_step == -1:
+                self.seqA_align += "-"
+                self.seqB_align = self._seqB[i - 1]
+                i -= 1
+            elif back_step == 1:
+                self.seqA_align += self._seqA[j - 1]
+                self.seqB_align += "-"
                 j -= 1
-            elif score_current == score_left + gap_penalty:
-                alignA += '-'
-                alignB += seqB[i - 1]
+
+        if i > 0 and j == 0:
+            while i > 0:
+                self.seqA_align += '-'
+                self.seqB_align += self._seqB[j - 1]
+                i -= 1
+        if i == 0 and j > 0:
+            while j > 0:
+                self.seqA_align += self._seqA[j - 1]
+                self.seqB_align += '-'
                 i -= 1
 
-        # Finish tracing up to the top left cell
-        while i > 0:
-            alignA += seqA[i - 1]
-            alignB += '-'
-            j -= 1
-        while j > 0:
-            alignA += '-'
-            alignB += seqB[j - 1]
-            i -= 1
-
-        # Traversed the score matrix from the bottom right so the two sequences will be reversed.
-        # Reverse the sequences.
-        alignA = alignA[::-1]
-        alignB = alignB[::-1]
-
-        # Update seq alignment values
-        self.seqA_align = alignA
-        self.seqB_align = alignB
-
-        self.alignment_score = self._align_matrix.sum()
+        self.seqA_align = self.seqA_align[::-1]
+        self.seqB_align = self.seqB_align[::-1]
 
         return (self.alignment_score, self.seqA_align, self.seqB_align)
 
