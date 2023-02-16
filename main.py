@@ -30,6 +30,19 @@ def main():
     # Align Tursiops truncatus to Homo sapiens
     align_turs_score, hs_turs_align, turs_hs_align = needle_wunsch.align(hs_seq, tt_seq)
 
+    # Make dictionary to store species names with their corresponding alignment score and sequence
+    seq_dict = {'Gallus gallus': (align_gallus_score, gallus_hs_align),
+                'Mus musculus': (align_mus_score, mus_hs_align),
+                'Balaeniceps rex': (align_bal_score, bal_hs_align),
+                'Tursiops truncatus': (align_turs_score, turs_hs_align)}
+
+    # Sort seq_dictionary based on alignment score
+    sorted_seq_dict = {k: seq_dict[k] for k in sorted(seq_dict, key=seq_dict.get, reverse=True)}
+
+    # Print alignment of BRD2 sequences in order of species with BRD2 sequence most similar to Homo Sapiens
+    print(hs_gallus_align, 'Homo Sapiens')
+    for k, v in sorted_seq_dict.items():
+        print(v[1], k)
 
     # TODO print all of the alignment scores between each species BRD2 and human BRD2
     # using gap opening penalty of -10 and a gap extension penalty of -1 and BLOSUM62 matrix
