@@ -167,7 +167,7 @@ class NeedlemanWunsch:
                                      (self._gapB_matrix[i][j - 1] + gap_ext_penalty))
                 self._score_matrix[i][j] = max(self._align_matrix[i][j], self._gapA_matrix[i][j], self._gapB_matrix[i][j])
 
-
+        return self._backtrace()
 
     def _backtrace(self) -> Tuple[float, str, str]:
         """
